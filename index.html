@@ -51,6 +51,67 @@
                     <p>लिखें और सुनें – हिंदी और अंग्रेज़ी में नेचुरल आवाज़</p>
                 </div>
 
+<!-- TTS Card ke upar yeh sections add karo -->
+<section id="dashboardSection" class="content-section" style="display: none;">
+    <div class="dashboard-card">
+        <h2>Dashboard</h2>
+        <p>Welcome to VOICELAB! Here's your usage statistics:</p>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <i class="fas fa-microphone"></i>
+                <div>
+                    <h3>156</h3>
+                    <p>Generations Today</p>
+                </div>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <h3>45 min</h3>
+                    <p>Audio Generated</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="voiceLabSection" class="content-section">
+    <!-- TTS Card yahin rahega, isko wrap karo -->
+    <div class="tts-card">
+        <!-- ... aapka existing TTS card ka saara HTML ... -->
+    </div>
+</section>
+
+<section id="historySection" class="content-section" style="display: none;">
+    <div class="history-card">
+        <h2>History</h2>
+        <p>Your recent audio generations will appear here.</p>
+        <div class="history-list">
+            <div class="history-item">
+                <i class="fas fa-file-audio"></i>
+                <span>Sample audio 1</span>
+                <span>2 min ago</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="settingsSection" class="content-section" style="display: none;">
+    <div class="settings-card">
+        <h2>Settings</h2>
+        <div class="setting-group">
+            <label>
+                <i class="fas fa-volume-up"></i>
+                Default Voice
+                <select>
+                    <option>Alloy</option>
+                    <option>Nova</option>
+                </select>
+            </label>
+        </div>
+    </div>
+</section>
+
                 <!-- Text Input -->
                 <div class="input-section">
                     <textarea id="textInput" placeholder="यहाँ अपना टेक्स्ट लिखें... (Example: नमस्ते, आप कैसे हैं?)" maxlength="5000"></textarea>
