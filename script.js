@@ -1,275 +1,220 @@
-// script.js - VOICELAB PRO Phase 1
+// script.js - VOICELAB PRO with XTTS-v2 API
 
-// DOM एलिमेंट्स
-const speakBtn = document.getElementById('speakBtn');
-const stopBtn = document.getElementById('stopBtn');
-const downloadBtn = document.getElementById('downloadBtn');
+// API Configuration (अपने Hugging Face Space का URL डालें)
+const API_BASE_URL = 'https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space';
+const API_KEY = 'YOUR_API_KEY'; // ऊपर जनरेट किया हुआ FRIEND_1_TOKEN
+
+// DOM Elements
 const textInput = document.getElementById('textInput');
-const ttsEngine = document.getElementById('ttsEngine');
-const languageSelect = document.getElementById('languageSelect');
-const voiceSelect = document.getElementById('voiceSelect');
-const speedRange = document.getElementById('speedRange');
-const pitchRange = document.getElementById('pitchRange');
+const charCount = document.getElementById('charCount');
+const language = document.getElementById('language');
+const voiceStyle = document.getElementById('voiceStyle');
+const speed = document.getElementById('speed');
+const pitch = document.getElementById('pitch');
+const stability = document.getElementById('stability');
+const clarity = document.getElementById('clarity');
 const speedValue = document.getElementById('speedValue');
 const pitchValue = document.getElementById('pitchValue');
+const stabilityValue = document.getElementById('stabilityValue');
+const clarityValue = document.getElementById('clarityValue');
+const generateBtn = document.getElementById('generateBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const stopBtn = document.getElementById('stopBtn');
+const audioPlayer = document.getElementById('audioPlayer');
+const audioElement = document.getElementById('audioElement');
 const statusDiv = document.getElementById('status');
-const uploadBtn = document.getElementById('uploadBtn');
-const clearBtn = document.getElementById('clearBtn');
-const copyBtn = document.getElementById('copyBtn');
+const voiceSamples = document.getElementById('voiceSamples');
+const themeToggle = document.getElementById('themeToggle');
 
-// वेरिएबल्स
-let allVoices = [];
-let currentUtterance = null;
+// State
+let currentAudioUrl = null;
+let isGenerating = false;
 
-// स्टेटस दिखाने का फंक्शन
-function showStatus(message, isError = false) {
-    statusDiv.textContent = message;
-    statusDiv.style.color = isError ? '#ff6b6b' : 'white';
-}
-
-// वॉयस लिस्ट लोड करें
-function loadVoices() {
-    allVoices = window.speechSynthesis.getVoices();
+// Character Counter
+textInput.addEventListener('input', () => {
+    const count = textInput.value.length;
+    charCount.textContent = count;
     
-    if (allVoices.length === 0) {
-        setTimeout(loadVoices, 100);
-        return;
-    }
-    
-    updateVoiceSelect();
-    showStatus(`✅ ${allVoices.length} आवाज़ें लोड हुईं`);
-}
-
-// वॉयस सेलेक्ट को अपडेट करें (बिना कैटेगरी के - असली नाम दिखाएँ)
-function updateVoiceSelect() {
-    const selectedLang = languageSelect.value;
-    
-    voiceSelect.innerHTML = ''; // खाली करें
-    
-    // भाषा के हिसाब से वॉयस फिल्टर करें
-    let filteredVoices = allVoices.filter(voice => voice.lang === selectedLang);
-    
-    // हिंदी के लिए: अगर कोई हिंदी वॉयस नहीं मिली, तो सारी दिखाएँ
-    if (filteredVoices.length === 0 && selectedLang === 'hi-IN') {
-        filteredVoices = allVoices.filter(voice => voice.lang.startsWith('en'));
-        showStatus('⚠️ हिंदी आवाज़ नहीं मिली, इंग्लिश आवाज़ें दिखा रहे हैं', false);
-    }
-    
-    // हर वॉयस के लिए एक ऑप्शन बनाएँ
-    filteredVoices.forEach((voice, index) => {
-        const option = document.createElement('option');
-        option.value = allVoices.indexOf(voice); // original index स्टोर करें
-        
-        // वॉयस के नाम में ही लिंग का पता चल जाता है (जैसे "Microsoft Zira - Female")
-        option.textContent = `${voice.name} (${voice.lang})`;
-        
-        voiceSelect.appendChild(option);
-    });
-    
-    if (filteredVoices.length === 0) {
-        voiceSelect.innerHTML = '<option value="">कोई आवाज़ नहीं मिली</option>';
-    }
-}
-
-// बोलने का फंक्शन
-function speak() {
-    const text = textInput.value.trim();
-    
-    if (text === '') {
-        showStatus('❌ कृपया कुछ टेक्स्ट लिखें!', true);
-        return;
-    }
-
-    // पहले से चल रही आवाज़ रोकें
-    window.speechSynthesis.cancel();
-    
-    const engine = ttsEngine.value;
-    
-    if (engine === 'kokoro' && languageSelect.value.startsWith('en')) {
-        // Kokoro TTS (सिर्फ इंग्लिश के लिए) - Phase 2 में implement होगा
-        showStatus('⚠️ Kokoro TTS Phase 2 में आएगा। अभी Web Speech API इस्तेमाल करें।', false);
-        return;
+    // Warning at 4500 characters
+    if (count > 4500) {
+        charCount.style.color = 'var(--warning)';
     } else {
-        // Web Speech API (डिफ़ॉल्ट)
-        showStatus('🔄 आवाज़ बन रही है...');
+        charCount.style.color = 'var(--accent-primary)';
+    }
+});
 
-        // नया utterance बनाएँ
-        currentUtterance = new SpeechSynthesisUtterance(text);
-        
-        // लैंग्वेज सेट करें
-        currentUtterance.lang = languageSelect.value;
-        
-        // वॉयस सेट करें (अगर चुनी हो)
-        const selectedVoiceIndex = voiceSelect.value;
-        if (selectedVoiceIndex !== '' && allVoices[selectedVoiceIndex]) {
-            currentUtterance.voice = allVoices[selectedVoiceIndex];
-        }
-        
-        // स्पीड और पिच सेट करें
-        currentUtterance.rate = parseFloat(speedRange.value);
-        currentUtterance.pitch = parseFloat(pitchRange.value);
+// Slider Values
+speed.addEventListener('input', () => {
+    speedValue.textContent = speed.value + 'x';
+});
 
-        // इवेंट हैंडलर
-        currentUtterance.onstart = function() {
-            showStatus('🔊 बोल रहा हूँ...');
-        };
+pitch.addEventListener('input', () => {
+    pitchValue.textContent = pitch.value;
+});
 
-        currentUtterance.onend = function() {
-            showStatus('✅ हो गया!');
-            currentUtterance = null;
-        };
+stability.addEventListener('input', () => {
+    stabilityValue.textContent = Math.round(stability.value * 100) + '%';
+});
 
-        currentUtterance.onerror = function(event) {
-            let errorMsg = '❌ एरर: ';
-            if (event.error === 'synthesis-failed') {
-                errorMsg += 'आवाज़ नहीं मिल पाई। कोई दूसरी आवाज़ चुनें।';
-            } else {
-                errorMsg += event.error;
+clarity.addEventListener('input', () => {
+    clarityValue.textContent = Math.round(clarity.value * 100) + '%';
+});
+
+// Theme Toggle
+themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-theme');
+    const icon = themeToggle.querySelector('i');
+    if (document.body.classList.contains('light-theme')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+    } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+    }
+});
+
+// Show Status
+function showStatus(message, type = 'info') {
+    statusDiv.textContent = message;
+    statusDiv.style.color = type === 'error' ? 'var(--error)' : 
+                           type === 'success' ? 'var(--success)' : 
+                           'var(--text-secondary)';
+}
+
+// Load Voice Samples
+async function loadVoiceSamples() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/voices`, {
+            headers: {
+                'key': API_KEY
             }
-            showStatus(errorMsg, true);
-            currentUtterance = null;
-        };
-
-        // बोलना शुरू करें
-        try {
-            window.speechSynthesis.speak(currentUtterance);
-        } catch (e) {
-            showStatus('❌ बोल नहीं सकता: ' + e.message, true);
-        }
+        });
+        
+        const data = await response.json();
+        
+        voiceSamples.innerHTML = '';
+        data.voices.forEach(voice => {
+            const card = document.createElement('div');
+            card.className = 'sample-card';
+            card.innerHTML = `
+                <i class="fas fa-wave-square"></i>
+                <div class="sample-info">
+                    <h4>${voice.voice_id}</h4>
+                    <p>${voice.description || 'Default voice'}</p>
+                </div>
+            `;
+            card.addEventListener('click', () => playSample(voice.voice_id));
+            voiceSamples.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Failed to load voices:', error);
     }
 }
 
-// इवेंट लिसनर्स
-
-// स्पीड और पिच वैल्यू अपडेट करें
-speedRange.addEventListener('input', function() {
-    speedValue.textContent = this.value;
-});
-
-pitchRange.addEventListener('input', function() {
-    pitchValue.textContent = this.value;
-});
-
-// भाषा बदलने पर वॉयस लिस्ट अपडेट करें
-languageSelect.addEventListener('change', updateVoiceSelect);
-
-// TTS इंजन बदलने पर स्टेटस दिखाएँ
-ttsEngine.addEventListener('change', function() {
-    if (this.value === 'kokoro') {
-        showStatus('⚠️ Kokoro TTS Phase 2 में आएगा। अभी Web Speech API चुने।', false);
-    }
-});
-
-// स्पीक बटन
-speakBtn.addEventListener('click', speak);
-
-// स्टॉप बटन
-stopBtn.addEventListener('click', function() {
-    window.speechSynthesis.cancel();
-    showStatus('⏹️ रोक दिया गया');
-    currentUtterance = null;
-});
-
-// डाउनलोड बटन (अस्थायी निर्देश)
-downloadBtn.addEventListener('click', function() {
-    const text = textInput.value.trim();
-    
-    if (text === '') {
-        showStatus('❌ डाउनलोड के लिए कुछ टेक्स्ट लिखें!', true);
-        return;
-    }
-    
-    // निर्देश वाला अलर्ट
-    const instructions = `
-🎙️ MP3 डाउनलोड करने के लिए:
-
-1. अपने सिस्टम का साउंड रिकॉर्डर खोलें:
-   - Windows: Voice Recorder ऐप
-   - Mac: QuickTime Player (File → New Audio Recording)
-   - Android: कोई भी रिकॉर्डिंग ऐप
-   - iPhone: Voice Memos
-
-2. इस वेबसाइट पर "बोलें" बटन दबाएँ
-
-3. रिकॉर्डिंग शुरू करें और आवाज़ रिकॉर्ड करें
-
-4. रिकॉर्डिंग को MP3 में बदलें (online converter से)
-
-⚡ जल्द ही हम डायरेक्ट MP3 डाउनलोड फीचर लाएँगे (Kokoro TTS के साथ)!
-    `;
-    
-    alert(instructions);
-    showStatus('📝 ऊपर दिए गए निर्देश देखें', false);
-});
-
-// अपलोड बटन
-uploadBtn.addEventListener('click', function() {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.txt';
-    
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                textInput.value = e.target.result;
-                showStatus('✅ फाइल लोड हो गई!');
-            };
-            reader.readAsText(file);
-        }
-    });
-    
-    fileInput.click();
-});
-
-// क्लियर बटन
-clearBtn.addEventListener('click', function() {
-    textInput.value = '';
-    showStatus('🗑️ टेक्स्ट क्लियर हो गया');
-});
-
-// कॉपी बटन
-copyBtn.addEventListener('click', function() {
-    const text = textInput.value.trim();
-    
-    if (text === '') {
-        showStatus('❌ कॉपी करने के लिए कुछ टेक्स्ट लिखें!', true);
-        return;
-    }
-    
-    navigator.clipboard.writeText(text).then(function() {
-        showStatus('✅ टेक्स्ट कॉपी हो गया!');
-    }).catch(function() {
-        showStatus('❌ कॉपी नहीं हो सका', true);
-    });
-});
-
-// शॉर्टकट: Ctrl + Enter
-textInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-        speak();
-    }
-});
-
-// ब्राउज़र में वॉयस लोड होने पर
-if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+// Play Voice Sample
+function playSample(voiceId) {
+    textInput.value = `This is a sample of the ${voiceId} voice. यह ${voiceId} आवाज़ का नमूना है।`;
+    generateSpeech();
 }
 
-// पेज लोड होने पर वॉयस लोड करें
-loadVoices();
-
-// कुछ ब्राउज़र में वॉयस लोड होने में टाइम लगता है, इसलिए बैकअप
-setTimeout(() => {
-    if (allVoices.length === 0) {
-        loadVoices();
+// Generate Speech
+async function generateSpeech() {
+    if (!textInput.value.trim()) {
+        showStatus('❌ Please enter some text!', 'error');
+        return;
     }
-}, 500);
+    
+    isGenerating = true;
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
+    showStatus('🔄 Generating speech...');
+    
+    try {
+        // Voice mapping based on style
+        let voiceId = 'default';
+        if (voiceStyle.value === 'male') voiceId = 'male_1';
+        else if (voiceStyle.value === 'female') voiceId = 'female_1';
+        else if (voiceStyle.value === 'child') voiceId = 'child_1';
+        else if (voiceStyle.value === 'old') voiceId = 'old_1';
+        
+        const response = await fetch(`${API_BASE_URL}/tts`, {
+            method: 'POST',
+            headers: {
+                'key': API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: textInput.value,
+                voice: voiceId,
+                language: language.value,
+                format: 'mp3',
+                speed: parseFloat(speed.value),
+                pitch: parseFloat(pitch.value)
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('API request failed');
+        }
+        
+        // Get audio blob
+        const audioBlob = await response.blob();
+        currentAudioUrl = URL.createObjectURL(audioBlob);
+        
+        // Update audio player
+        audioElement.src = currentAudioUrl;
+        audioPlayer.style.display = 'block';
+        
+        // Auto-play
+        await audioElement.play();
+        
+        showStatus('✅ Speech generated successfully!', 'success');
+        
+    } catch (error) {
+        showStatus('❌ Error: ' + error.message, 'error');
+        console.error(error);
+    } finally {
+        isGenerating = false;
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-play"></i> Generate Speech';
+    }
+}
 
-// ब्राउज़र बंद होने पर स्पीच रोकें
-window.addEventListener('beforeunload', function() {
-    if (currentUtterance) {
-        window.speechSynthesis.cancel();
+// Download MP3
+function downloadMP3() {
+    if (!currentAudioUrl) {
+        showStatus('❌ No audio to download! Generate first.', 'error');
+        return;
+    }
+    
+    const a = document.createElement('a');
+    a.href = currentAudioUrl;
+    a.download = `voice-${Date.now()}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    showStatus('✅ Download started!', 'success');
+}
+
+// Stop playback
+function stopPlayback() {
+    audioElement.pause();
+    audioElement.currentTime = 0;
+}
+
+// Event Listeners
+generateBtn.addEventListener('click', generateSpeech);
+downloadBtn.addEventListener('click', downloadMP3);
+stopBtn.addEventListener('click', stopPlayback);
+
+// Initialize
+loadVoiceSamples();
+
+// Clean up object URLs
+window.addEventListener('beforeunload', () => {
+    if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
     }
 });
