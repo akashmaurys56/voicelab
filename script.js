@@ -1,4 +1,4 @@
-// script.js – VOICELAB with Google TTS + CORS Proxy
+// script.js – VOICELAB with RapidAPI (Complete Working Version)
 
 // ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
@@ -27,18 +27,15 @@ const themeToggle = document.getElementById('themeToggle');
 let currentAudioUrl = null;
 let isGenerating = false;
 
-// ========== Language to Google TTS Code Mapping ==========
-const langMap = {
-    'hi': 'hi',
-    'en': 'en-US',
-    'en-gb': 'en-GB',
-    'auto': 'en-US'
-};
+// ========== RapidAPI Configuration ==========
+const RAPIDAPI_KEY = 'd0458b1b03msh1ca0ad5522cff6dp17804fjsnd7653add816c';
+const RAPIDAPI_HOST = 'open-ai-text-to-speech1.p.rapidapi.com';
+const RAPIDAPI_URL = 'https://open-ai-text-to-speech1.p.rapidapi.com/'; // ✅ Ye sahi URL hai
 
 // ========== Utility Functions ==========
 function showStatus(message, isError = false) {
     statusDiv.textContent = message;
-    statusDiv.style.color = isError ? 'var(--error)' : 'var(--text-secondary)';
+    statusDiv.style.color = isError ? '#ef4444' : 'var(--text-secondary)';
 }
 
 function updateCharCount() {
@@ -67,7 +64,19 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-========== TTS Generation Function (RapidAPI) ==========
+// ========== Voice Mapping ==========
+function getVoiceId() {
+    if (specificVoice.value) return specificVoice.value;
+    
+    const style = voiceStyle.value;
+    if (style === 'male') return 'onyx';
+    if (style === 'female') return 'nova';
+    if (style === 'child') return 'shimmer';
+    if (style === 'old') return 'echo';
+    return 'alloy'; // default
+}
+
+// ========== Main TTS Function ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -82,41 +91,26 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        // RapidAPI se mili key aur host
-        const API_KEY = 'd0458b1b03msh1ca0ad5522cff6dp17804fjsnd7653add816c';
-        const API_HOST = 'open-ai-text-to-speech1.p.rapidapi.com';
-        
-        // Sahi endpoint yahan daalo (RapidAPI dashboard se copy karo)
-        const API_URL = 'https://open-ai-text-to-speech1.p.rapidapi.com/';
-
-        // Voice mapping - RapidAPI ke voices ke according
-        const voiceMap = {
-            'male': 'onyx',
-            'female': 'nova',
-            'child': 'shimmer',
-            'old': 'echo',
-            'auto': 'alloy'
-        };
-
-        const selectedVoice = specificVoice.value || voiceMap[voiceStyle.value] || 'alloy';
-
-        // Request body
         const payload = {
             model: "tts-1",
             input: text,
-            instructions: "Speak naturally.", // Aap chahein to custom instructions de sakte ho
-            voice: selectedVoice
+            voice: getVoiceId()
         };
+
+        // Language agar specific ho to instructions mein dal sakte hain
+        if (language.value === 'hi') {
+            payload.instructions = "Speak in Hindi language with clear pronunciation.";
+        }
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(RAPIDAPI_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-rapidapi-host': API_HOST,
-                'x-rapidapi-key': API_KEY
+                'x-rapidapi-host': RAPIDAPI_HOST,
+                'x-rapidapi-key': RAPIDAPI_KEY
             },
             body: JSON.stringify(payload),
             signal: controller.signal
@@ -128,13 +122,7 @@ async function generateSpeech(action = 'play') {
             throw new Error(`API error (${response.status}): ${errorText.slice(0, 100)}`);
         }
 
-        // Check if response is audio
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('audio')) {
-            const text = await response.text();
-            throw new Error(`Expected audio but got: ${text.slice(0, 100)}`);
-        }
-
+        // ✅ RapidAPI se audio blob milega
         const audioBlob = await response.blob();
         
         if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
@@ -169,7 +157,7 @@ async function generateSpeech(action = 'play') {
         } else {
             showStatus('❌ एरर: ' + error.message, true);
         }
-        console.error(error);
+        console.error('Full error:', error);
     } finally {
         isGenerating = false;
         generateBtn.disabled = false;
@@ -190,9 +178,12 @@ stopBtn.addEventListener('click', () => {
 // ========== Voice Samples ==========
 function loadVoiceSamples() {
     const samples = [
-        { name: 'English US', lang: 'en', text: 'Hello, this is an English voice.' },
-        { name: 'English UK', lang: 'en-gb', text: 'Hello, this is a British English voice.' },
-        { name: 'हिंदी', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' }
+        { name: 'Alloy (Neutral)', voice: 'alloy', lang: 'en', text: 'Hello, I am Alloy, a neutral voice.' },
+        { name: 'Nova (Female)', voice: 'nova', lang: 'en', text: 'Hi, this is Nova, an energetic female voice.' },
+        { name: 'Onyx (Male)', voice: 'onyx', lang: 'en', text: 'Hello, I am Onyx, a deep male voice.' },
+        { name: 'Shimmer (Child-like)', voice: 'shimmer', lang: 'en', text: 'Hey there! I am Shimmer, light and playful.' },
+        { name: 'Echo (Mature)', voice: 'echo', lang: 'en', text: 'Greetings, I am Echo, a resonant voice.' },
+        { name: 'Hindi Test', voice: 'alloy', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' }
     ];
 
     voiceSamples.innerHTML = '';
@@ -209,6 +200,7 @@ function loadVoiceSamples() {
         card.addEventListener('click', () => {
             textInput.value = s.text;
             language.value = s.lang;
+            specificVoice.value = s.voice;
             generateSpeech('play');
         });
         voiceSamples.appendChild(card);
@@ -223,3 +215,92 @@ loadVoiceSamples();
 window.addEventListener('beforeunload', () => {
     if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
 });
+
+// Console mein message aayega ki script load ho gayi
+console.log('✅ VOICELAB script loaded successfully!');
+
+// ========== Sidebar Navigation ==========
+const navItems = document.querySelectorAll('.nav-item');
+const sections = {
+    'dashboard': document.getElementById('dashboardSection'),
+    'voiceLab': document.getElementById('voiceLabSection'),
+    'history': document.getElementById('historySection'),
+    'settings': document.getElementById('settingsSection')
+};
+
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Sabse pehle saare nav items se active class hatao
+        navItems.forEach(nav => nav.classList.remove('active'));
+        
+        // Current item ko active karo
+        item.classList.add('active');
+        
+        // Saari sections ko hide karo
+        Object.values(sections).forEach(section => {
+            if (section) section.style.display = 'none';
+        });
+        
+        // Click ke according section dikhao
+        const linkText = item.querySelector('span').textContent.toLowerCase();
+        if (linkText.includes('डैशबोर्ड') || linkText.includes('dashboard')) {
+            if (sections.dashboard) sections.dashboard.style.display = 'block';
+        } else if (linkText.includes('वॉयस') || linkText.includes('voice')) {
+            if (sections.voiceLab) sections.voiceLab.style.display = 'block';
+        } else if (linkText.includes('हिस्ट्री') || linkText.includes('history')) {
+            if (sections.history) sections.history.style.display = 'block';
+        } else if (linkText.includes('सेटिंग्स') || linkText.includes('settings')) {
+            if (sections.settings) sections.settings.style.display = 'block';
+        }
+    });
+});
+
+// ========== Voice Samples (Language-wise) ==========
+function loadVoiceSamples() {
+    const samples = {
+        en: [
+            { name: 'Alloy (Neutral)', voice: 'alloy', text: 'Hello, I am Alloy, a neutral voice.' },
+            { name: 'Nova (Female)', voice: 'nova', text: 'Hi, this is Nova, an energetic female voice.' },
+            { name: 'Onyx (Male)', voice: 'onyx', text: 'Hello, I am Onyx, a deep male voice.' },
+            { name: 'Shimmer (Child)', voice: 'shimmer', text: 'Hey there! I am Shimmer, light and playful.' },
+            { name: 'Echo (Mature)', voice: 'echo', text: 'Greetings, I am Echo, a resonant voice.' }
+        ],
+        hi: [
+            { name: 'हिंदी (पुरुष)', voice: 'onyx', text: 'नमस्ते, मैं पुरुष आवाज़ में बोल रहा हूँ।' },
+            { name: 'हिंदी (महिला)', voice: 'nova', text: 'नमस्ते, मैं महिला आवाज़ में बोल रही हूँ।' },
+            { name: 'हिंदी (बच्चा)', voice: 'shimmer', text: 'नमस्ते, मैं बच्चे जैसी आवाज़ में बोल रहा हूँ।' }
+        ]
+    };
+
+    function updateSamples() {
+        const currentLang = language.value;
+        const langSamples = samples[currentLang] || samples.en;
+        
+        voiceSamples.innerHTML = '';
+        langSamples.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'sample-card';
+            card.innerHTML = `
+                <i class="fas fa-wave-square"></i>
+                <div class="sample-info">
+                    <h4>${s.name}</h4>
+                    <p>${currentLang === 'hi' ? 'हिंदी' : 'English'}</p>
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                textInput.value = s.text;
+                specificVoice.value = s.voice;
+                generateSpeech('play');
+            });
+            voiceSamples.appendChild(card);
+        });
+    }
+
+    // Pehli baar load karo
+    updateSamples();
+    
+    // Jab language change ho, tab samples update karo
+    language.addEventListener('change', updateSamples);
+}
