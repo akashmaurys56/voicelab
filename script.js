@@ -1,8 +1,25 @@
 // script.js - VOICELAB PRO with XTTS-v2 API
 
-// API Configuration (अपने Hugging Face Space का URL डालें)
-const API_BASE_URL = 'https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space';
-const API_KEY = 'YOUR_API_KEY'; // ऊपर जनरेट किया हुआ FRIEND_1_TOKEN
+// Pollinations API URL
+    const voice = voiceSelect.value;
+    const language = languageSelect.value !== 'auto' ? languageSelect.value : '';
+    
+    // API endpoint - with emotion tags support 
+    const url = `https://text.pollinations.ai/${encodeURIComponent(text)}?voice=${voice}&lang=${language}`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API failed');
+        
+        const audioBlob = await response.blob();
+        currentAudioUrl = URL.createObjectURL(audioBlob);
+        
+        if (action === 'play') {
+            audioElement.src = currentAudioUrl;
+            audioPlayer.style.display = 'block';
+            await audioElement.play();
+            showStatus('✅ Playing...');
+        } else {
 
 // DOM Elements
 const textInput = document.getElementById('textInput');
