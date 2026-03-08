@@ -1,12 +1,12 @@
-// script.js - VOICELAB NATURAL के लिए एडवांस वॉयस कंट्रोल
+// script.js - VOICELAB PRO Phase 1
 
 // DOM एलिमेंट्स
 const speakBtn = document.getElementById('speakBtn');
 const stopBtn = document.getElementById('stopBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const textInput = document.getElementById('textInput');
+const ttsEngine = document.getElementById('ttsEngine');
 const languageSelect = document.getElementById('languageSelect');
-const voiceCategory = document.getElementById('voiceCategory');
 const voiceSelect = document.getElementById('voiceSelect');
 const speedRange = document.getElementById('speedRange');
 const pitchRange = document.getElementById('pitchRange');
@@ -24,48 +24,10 @@ let currentUtterance = null;
 // स्टेटस दिखाने का फंक्शन
 function showStatus(message, isError = false) {
     statusDiv.textContent = message;
-    statusDiv.style.color = isError ? '#e53e3e' : '#667eea';
+    statusDiv.style.color = isError ? '#ff6b6b' : 'white';
 }
 
-// वॉयस को कैटेगरी में बांटें (Male, Female, Child, Old)
-function categorizeVoice(voice) {
-    const name = voice.name.toLowerCase();
-    const lang = voice.lang;
-    
-    // हिंदी के लिए खास पहचान
-    if (lang.includes('hi')) {
-        if (name.includes('female') || name.includes('woman') || name.includes('girl') || name.includes('महिला')) {
-            return 'female';
-        } else if (name.includes('male') || name.includes('man') || name.includes('boy') || name.includes('पुरुष')) {
-            return 'male';
-        } else if (name.includes('child') || name.includes('kid') || name.includes('बच्चा')) {
-            return 'child';
-        } else if (name.includes('old') || name.includes('aged') || name.includes('बुजुर्ग')) {
-            return 'old';
-        }
-    }
-    
-    // इंग्लिश के लिए पहचान
-    if (name.includes('female') || name.includes('woman') || name.includes('girl')) {
-        return 'female';
-    } else if (name.includes('male') || name.includes('man') || name.includes('boy')) {
-        return 'male';
-    } else if (name.includes('child') || name.includes('kid')) {
-        return 'child';
-    } else if (name.includes('old') || name.includes('aged') || name.includes('elder')) {
-        return 'old';
-    }
-    
-    // पिच के आधार पर अनुमान (ज्यादा पिच = female/child, कम पिच = male/old)
-    // यह सटीक नहीं है, लेकिन काम चल जाएगा
-    if (voice.default) {
-        return 'male'; // default usually male
-    }
-    
-    return 'all'; // अगर कुछ पता न चले
-}
-
-// वॉयस लिस्ट लोड करें और अपडेट करें
+// वॉयस लिस्ट लोड करें
 function loadVoices() {
     allVoices = window.speechSynthesis.getVoices();
     
@@ -78,43 +40,29 @@ function loadVoices() {
     showStatus(`✅ ${allVoices.length} आवाज़ें लोड हुईं`);
 }
 
-// वॉयस सेलेक्ट को अपडेट करें (भाषा और कैटेगरी के हिसाब से)
+// वॉयस सेलेक्ट को अपडेट करें (बिना कैटेगरी के - असली नाम दिखाएँ)
 function updateVoiceSelect() {
     const selectedLang = languageSelect.value;
-    const selectedCategory = voiceCategory.value;
     
-    // पहले सेलेक्ट को खाली करें
-    voiceSelect.innerHTML = '<option value="">कोई खास आवाज़ चुनें</option>';
+    voiceSelect.innerHTML = ''; // खाली करें
     
     // भाषा के हिसाब से वॉयस फिल्टर करें
     let filteredVoices = allVoices.filter(voice => voice.lang === selectedLang);
     
-    // हिंदी के लिए: अगर कोई हिंदी वॉयस नहीं मिली, तो इंग्लिश वाली भी दिखाएँ
+    // हिंदी के लिए: अगर कोई हिंदी वॉयस नहीं मिली, तो सारी दिखाएँ
     if (filteredVoices.length === 0 && selectedLang === 'hi-IN') {
-        filteredVoices = allVoices.filter(voice => voice.lang.includes('en'));
+        filteredVoices = allVoices.filter(voice => voice.lang.startsWith('en'));
         showStatus('⚠️ हिंदी आवाज़ नहीं मिली, इंग्लिश आवाज़ें दिखा रहे हैं', false);
     }
     
-    // कैटेगरी के हिसाब से फिल्टर करें
-    if (selectedCategory !== 'all') {
-        filteredVoices = filteredVoices.filter(voice => {
-            const category = categorizeVoice(voice);
-            return category === selectedCategory;
-        });
-    }
-    
-    // फिल्टर की गई वॉयस को सेलेक्ट में ऐड करें
+    // हर वॉयस के लिए एक ऑप्शन बनाएँ
     filteredVoices.forEach((voice, index) => {
         const option = document.createElement('option');
         option.value = allVoices.indexOf(voice); // original index स्टोर करें
-        const category = categorizeVoice(voice);
-        let emoji = '🔊';
-        if (category === 'male') emoji = '👨';
-        if (category === 'female') emoji = '👩';
-        if (category === 'child') emoji = '🧒';
-        if (category === 'old') emoji = '👴';
         
-        option.textContent = `${emoji} ${voice.name} (${voice.lang})`;
+        // वॉयस के नाम में ही लिंग का पता चल जाता है (जैसे "Microsoft Zira - Female")
+        option.textContent = `${voice.name} (${voice.lang})`;
+        
         voiceSelect.appendChild(option);
     });
     
@@ -135,53 +83,59 @@ function speak() {
     // पहले से चल रही आवाज़ रोकें
     window.speechSynthesis.cancel();
     
-    showStatus('🔄 आवाज़ बन रही है...');
-
-    // नया utterance बनाएँ
-    currentUtterance = new SpeechSynthesisUtterance(text);
+    const engine = ttsEngine.value;
     
-    // लैंग्वेज सेट करें
-    currentUtterance.lang = languageSelect.value;
-    
-    // वॉयस सेट करें (अगर चुनी हो)
-    const selectedVoiceIndex = voiceSelect.value;
-    if (selectedVoiceIndex !== '' && allVoices[selectedVoiceIndex]) {
-        currentUtterance.voice = allVoices[selectedVoiceIndex];
-    }
-    
-    // स्पीड और पिच सेट करें
-    currentUtterance.rate = parseFloat(speedRange.value);
-    currentUtterance.pitch = parseFloat(pitchRange.value);
+    if (engine === 'kokoro' && languageSelect.value.startsWith('en')) {
+        // Kokoro TTS (सिर्फ इंग्लिश के लिए) - Phase 2 में implement होगा
+        showStatus('⚠️ Kokoro TTS Phase 2 में आएगा। अभी Web Speech API इस्तेमाल करें।', false);
+        return;
+    } else {
+        // Web Speech API (डिफ़ॉल्ट)
+        showStatus('🔄 आवाज़ बन रही है...');
 
-    // नेचुरल साउंड के लिए थोड़ा वॉल्यूम एडजस्ट करें
-    currentUtterance.volume = 1;
-
-    // इवेंट हैंडलर
-    currentUtterance.onstart = function() {
-        showStatus('🔊 बोल रहा हूँ...');
-    };
-
-    currentUtterance.onend = function() {
-        showStatus('✅ हो गया!');
-        currentUtterance = null;
-    };
-
-    currentUtterance.onerror = function(event) {
-        let errorMsg = '❌ एरर: ';
-        if (event.error === 'synthesis-failed') {
-            errorMsg += 'आवाज़ नहीं मिल पाई। कोई दूसरी आवाज़ चुनें।';
-        } else {
-            errorMsg += event.error;
+        // नया utterance बनाएँ
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        
+        // लैंग्वेज सेट करें
+        currentUtterance.lang = languageSelect.value;
+        
+        // वॉयस सेट करें (अगर चुनी हो)
+        const selectedVoiceIndex = voiceSelect.value;
+        if (selectedVoiceIndex !== '' && allVoices[selectedVoiceIndex]) {
+            currentUtterance.voice = allVoices[selectedVoiceIndex];
         }
-        showStatus(errorMsg, true);
-        currentUtterance = null;
-    };
+        
+        // स्पीड और पिच सेट करें
+        currentUtterance.rate = parseFloat(speedRange.value);
+        currentUtterance.pitch = parseFloat(pitchRange.value);
 
-    // बोलना शुरू करें
-    try {
-        window.speechSynthesis.speak(currentUtterance);
-    } catch (e) {
-        showStatus('❌ बोल नहीं सकता: ' + e.message, true);
+        // इवेंट हैंडलर
+        currentUtterance.onstart = function() {
+            showStatus('🔊 बोल रहा हूँ...');
+        };
+
+        currentUtterance.onend = function() {
+            showStatus('✅ हो गया!');
+            currentUtterance = null;
+        };
+
+        currentUtterance.onerror = function(event) {
+            let errorMsg = '❌ एरर: ';
+            if (event.error === 'synthesis-failed') {
+                errorMsg += 'आवाज़ नहीं मिल पाई। कोई दूसरी आवाज़ चुनें।';
+            } else {
+                errorMsg += event.error;
+            }
+            showStatus(errorMsg, true);
+            currentUtterance = null;
+        };
+
+        // बोलना शुरू करें
+        try {
+            window.speechSynthesis.speak(currentUtterance);
+        } catch (e) {
+            showStatus('❌ बोल नहीं सकता: ' + e.message, true);
+        }
     }
 }
 
@@ -198,7 +152,13 @@ pitchRange.addEventListener('input', function() {
 
 // भाषा बदलने पर वॉयस लिस्ट अपडेट करें
 languageSelect.addEventListener('change', updateVoiceSelect);
-voiceCategory.addEventListener('change', updateVoiceSelect);
+
+// TTS इंजन बदलने पर स्टेटस दिखाएँ
+ttsEngine.addEventListener('change', function() {
+    if (this.value === 'kokoro') {
+        showStatus('⚠️ Kokoro TTS Phase 2 में आएगा। अभी Web Speech API चुने।', false);
+    }
+});
 
 // स्पीक बटन
 speakBtn.addEventListener('click', speak);
@@ -210,7 +170,7 @@ stopBtn.addEventListener('click', function() {
     currentUtterance = null;
 });
 
-// डाउनलोड बटन (सिर्फ Chrome में काम करता है)
+// डाउनलोड बटन (अस्थायी निर्देश)
 downloadBtn.addEventListener('click', function() {
     const text = textInput.value.trim();
     
@@ -219,9 +179,27 @@ downloadBtn.addEventListener('click', function() {
         return;
     }
     
-    showStatus('⚠️ MP3 डाउनलोड के लिए Chrome का इस्तेमाल करें। अभी आप स्क्रीन रिकॉर्ड कर सकते हैं।');
+    // निर्देश वाला अलर्ट
+    const instructions = `
+🎙️ MP3 डाउनलोड करने के लिए:
+
+1. अपने सिस्टम का साउंड रिकॉर्डर खोलें:
+   - Windows: Voice Recorder ऐप
+   - Mac: QuickTime Player (File → New Audio Recording)
+   - Android: कोई भी रिकॉर्डिंग ऐप
+   - iPhone: Voice Memos
+
+2. इस वेबसाइट पर "बोलें" बटन दबाएँ
+
+3. रिकॉर्डिंग शुरू करें और आवाज़ रिकॉर्ड करें
+
+4. रिकॉर्डिंग को MP3 में बदलें (online converter से)
+
+⚡ जल्द ही हम डायरेक्ट MP3 डाउनलोड फीचर लाएँगे (Kokoro TTS के साथ)!
+    `;
     
-    // भविष्य में MP3 जनरेशन के लिए
+    alert(instructions);
+    showStatus('📝 ऊपर दिए गए निर्देश देखें', false);
 });
 
 // अपलोड बटन
