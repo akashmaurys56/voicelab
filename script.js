@@ -1,4 +1,4 @@
-// script.js – VOICELAB with Pollinations API (Free, No Key)
+// script.js – VOICELAB with Pollinations API (Fixed)
 
 // ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
@@ -24,8 +24,8 @@ const voiceSamples = document.getElementById('voiceSamples');
 const themeToggle = document.getElementById('themeToggle');
 
 // ========== Global Variables ==========
-let currentAudioUrl = null;      // Store blob URL for download
-let isGenerating = false;        // Prevent double clicks
+let currentAudioUrl = null;
+let isGenerating = false;
 
 // ========== Utility Functions ==========
 function showStatus(message, isError = false) {
@@ -53,16 +53,15 @@ themeToggle.addEventListener('click', () => {
     if (document.body.classList.contains('light-theme')) {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
-        // Optional: define light theme variables
     } else {
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');
     }
 });
 
-// ========== Voice Style Mapping to Pollinations Voice ==========
+// ========== Voice Style Mapping ==========
 function mapStyleToVoice(style, lang) {
-    if (specificVoice.value) return specificVoice.value; // if user selected specific
+    if (specificVoice.value) return specificVoice.value;
 
     switch (style) {
         case 'male': return 'onyx';      // deep male
@@ -73,7 +72,7 @@ function mapStyleToVoice(style, lang) {
     }
 }
 
-// ========== Main TTS Generation Function (Pollinations API) ==========
+// ========== Main TTS Generation Function ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -81,7 +80,6 @@ async function generateSpeech(action = 'play') {
         return;
     }
 
-    // Prevent multiple clicks
     if (isGenerating) return;
     isGenerating = true;
     generateBtn.disabled = true;
@@ -89,27 +87,55 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        // Prepare API parameters
         const voice = mapStyleToVoice(voiceStyle.value, language.value);
         const lang = language.value === 'auto' ? '' : language.value;
 
-        // Construct URL – Pollinations API expects text in URL path
         const encodedText = encodeURIComponent(text);
-        const url = `https://text.pollinations.ai/${encodedText}?voice=${voice}${lang ? '&lang=' + lang : ''}`;
+        // Pollinations API URL
+        let url = `https://text.pollinations.ai/${encodedText}?voice=${voice}`;
+        if (lang) url += `&lang=${lang}`;
 
-        // Fetch audio
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        // Fetch with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout
+
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API error (${response.status}): ${errorText.slice(0, 100)}`);
+        }
+
+        // Check if response is audio
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('audio')) {
+            const text = await response.text();
+            throw new Error(`Expected audio but got: ${text.slice(0, 100)}`);
+        }
 
         const audioBlob = await response.blob();
-        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl); // cleanup old
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+        // Create blob with proper MIME type
         currentAudioUrl = URL.createObjectURL(audioBlob);
 
         if (action === 'play') {
             audioElement.src = currentAudioUrl;
             audioPlayer.style.display = 'block';
-            await audioElement.play();
-            showStatus('✅ आवाज़ तैयार!');
+
+            // Handle audio errors
+            audioElement.onerror = (e) => {
+                console.error('Audio error:', e);
+                showStatus('❌ ऑडियो चलाने में समस्या। दोबारा प्रयास करें।', true);
+                audioPlayer.style.display = 'none';
+            };
+
+            audioElement.onloadeddata = () => {
+                showStatus('✅ आवाज़ तैयार!');
+                audioElement.play().catch(e => {
+                    showStatus('⚠️ ऑटो-प्ले नहीं हो सका, प्ले बटन दबाएँ', false);
+                });
+            };
         } else {
             // Download
             const a = document.createElement('a');
@@ -121,7 +147,12 @@ async function generateSpeech(action = 'play') {
             showStatus('✅ डाउनलोड शुरू!');
         }
     } catch (error) {
-        showStatus('❌ एरर: ' + error.message, true);
+        if (error.name === 'AbortError') {
+            showStatus('❌ टाइमआउट – सर्वर धीमा है। बाद में प्रयास करें।', true);
+        } else {
+            showStatus('❌ एरर: ' + error.message, true);
+        }
+        console.error(error);
     } finally {
         isGenerating = false;
         generateBtn.disabled = false;
@@ -129,7 +160,7 @@ async function generateSpeech(action = 'play') {
     }
 }
 
-// ========== Event Listeners for Buttons ==========
+// ========== Event Listeners ==========
 generateBtn.addEventListener('click', () => generateSpeech('play'));
 downloadBtn.addEventListener('click', () => generateSpeech('download'));
 
@@ -139,7 +170,7 @@ stopBtn.addEventListener('click', () => {
     showStatus('⏹️ रोक दिया गया');
 });
 
-// ========== Voice Samples (Predefined) ==========
+// ========== Voice Samples ==========
 function loadVoiceSamples() {
     const samples = [
         { name: 'Alloy (संतुलित)', voice: 'alloy', lang: 'en', text: 'Hello, this is Alloy speaking.' },
@@ -175,15 +206,7 @@ function loadVoiceSamples() {
 updateCharCount();
 loadVoiceSamples();
 
-// ========== Clean up on page unload ==========
+// ========== Cleanup ==========
 window.addEventListener('beforeunload', () => {
     if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
 });
-
-// ========== NOTE: भविष्य में दूसरा API लगाने के लिए ==========
-/* 
-   बस generateSpeech() फंक्शन के अंदर API URL और पैरामीटर बदल दें।
-   उदाहरण: अगर आपको ElevenLabs जैसा API मिल जाए, तो fetch का URL बदलें
-   और जरूरत के हिसाब से headers और body सेट करें।
-   बाकी सारा UI और कंट्रोल वैसे ही रहेगा।
-*/
