@@ -1,4 +1,4 @@
-// script.js – VOICELAB with Pollinations API (Fixed)
+// script.js – VOICELAB with StreamElements TTS (Free, Reliable)
 
 // ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
@@ -26,6 +26,48 @@ const themeToggle = document.getElementById('themeToggle');
 // ========== Global Variables ==========
 let currentAudioUrl = null;
 let isGenerating = false;
+
+// ========== Voice Mapping for StreamElements ==========
+// List of available voices: https://github.com/Gamer5001/Streamelements-TTS/blob/main/voices.md
+const voiceMap = {
+    // Hindi
+    hi: {
+        male: 'hi-IN-RaviNeural',
+        female: 'hi-IN-SwaraNeural',   // Actually StreamElements uses Azure voices, but let's map correctly
+        default: 'hi-IN-SwaraNeural'
+    },
+    // English (US)
+    en: {
+        male: 'en-US-JoeyNeural',
+        female: 'en-US-JennyNeural',
+        child: 'en-US-ChristopherNeural', // Christopher is a child-like voice
+        old: 'en-US-GuyNeural',           // Guy is mature
+        default: 'en-US-JennyNeural'
+    },
+    // English (UK)
+    'en-gb': {
+        male: 'en-GB-RyanNeural',
+        female: 'en-GB-LibbyNeural',
+        default: 'en-GB-LibbyNeural'
+    }
+};
+
+// Function to get voice ID based on language and style
+function getVoiceId(lang, style) {
+    // If user selected a specific voice, use it directly
+    if (specificVoice.value) return specificVoice.value;
+
+    // Determine language code
+    let langCode = lang;
+    if (lang === 'auto') langCode = 'en'; // default to English if auto
+
+    const langMap = voiceMap[langCode] || voiceMap.en; // fallback to English
+    if (style === 'male' && langMap.male) return langMap.male;
+    if (style === 'female' && langMap.female) return langMap.female;
+    if (style === 'child' && langMap.child) return langMap.child;
+    if (style === 'old' && langMap.old) return langMap.old;
+    return langMap.default || 'en-US-JennyNeural';
+}
 
 // ========== Utility Functions ==========
 function showStatus(message, isError = false) {
@@ -59,20 +101,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// ========== Voice Style Mapping ==========
-function mapStyleToVoice(style, lang) {
-    if (specificVoice.value) return specificVoice.value;
-
-    switch (style) {
-        case 'male': return 'onyx';      // deep male
-        case 'female': return 'nova';     // energetic female
-        case 'child': return 'shimmer';   // light, child-like
-        case 'old': return 'echo';        // resonant, mature
-        default: return 'alloy';           // neutral
-    }
-}
-
-// ========== Main TTS Generation Function ==========
+// ========== Main TTS Generation Function (StreamElements) ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -87,17 +116,16 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        const voice = mapStyleToVoice(voiceStyle.value, language.value);
-        const lang = language.value === 'auto' ? '' : language.value;
-
+        // Get voice ID based on selected language and style
+        const voiceId = getVoiceId(language.value, voiceStyle.value);
         const encodedText = encodeURIComponent(text);
-        // Pollinations API URL
-        let url = `https://text.pollinations.ai/${encodedText}?voice=${voice}`;
-        if (lang) url += `&lang=${lang}`;
+
+        // StreamElements API endpoint
+        const url = `https://api.streamelements.com/kappa/v2/speech?voice=${voiceId}&text=${encodedText}`;
 
         // Fetch with timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -107,16 +135,9 @@ async function generateSpeech(action = 'play') {
             throw new Error(`API error (${response.status}): ${errorText.slice(0, 100)}`);
         }
 
-        // Check if response is audio
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('audio')) {
-            const text = await response.text();
-            throw new Error(`Expected audio but got: ${text.slice(0, 100)}`);
-        }
-
+        // Get audio blob
         const audioBlob = await response.blob();
         if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-        // Create blob with proper MIME type
         currentAudioUrl = URL.createObjectURL(audioBlob);
 
         if (action === 'play') {
@@ -170,15 +191,15 @@ stopBtn.addEventListener('click', () => {
     showStatus('⏹️ रोक दिया गया');
 });
 
-// ========== Voice Samples ==========
+// ========== Voice Samples (Updated for StreamElements) ==========
 function loadVoiceSamples() {
     const samples = [
-        { name: 'Alloy (संतुलित)', voice: 'alloy', lang: 'en', text: 'Hello, this is Alloy speaking.' },
-        { name: 'Echo (गूंजदार)', voice: 'echo', lang: 'en', text: 'Greetings from Echo, your resonant voice.' },
-        { name: 'Nova (महिला)', voice: 'nova', lang: 'en', text: 'Hi there, Nova here with energy.' },
-        { name: 'Onyx (पुरुष)', voice: 'onyx', lang: 'en', text: 'This is Onyx, a deep male voice.' },
-        { name: 'Shimmer (बच्चा)', voice: 'shimmer', lang: 'en', text: 'Hey, I am Shimmer, light and playful.' },
-        { name: 'हिंदी नमूना', voice: 'alloy', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' }
+        { name: 'Jenny (US Female)', voice: 'en-US-JennyNeural', lang: 'en', text: 'Hello, I am Jenny, your virtual assistant.' },
+        { name: 'Joey (US Male)', voice: 'en-US-JoeyNeural', lang: 'en', text: 'Hi, this is Joey. I speak in a natural voice.' },
+        { name: 'Ravi (Hindi Male)', voice: 'hi-IN-RaviNeural', lang: 'hi', text: 'नमस्ते, मैं रवि हूँ। मैं हिंदी में बोलता हूँ।' },
+        { name: 'Swara (Hindi Female)', voice: 'hi-IN-SwaraNeural', lang: 'hi', text: 'नमस्ते, मैं स्वरा हूँ। आप कैसे हैं?' },
+        { name: 'Ryan (UK Male)', voice: 'en-GB-RyanNeural', lang: 'en-gb', text: 'Good day, this is Ryan from London.' },
+        { name: 'Libby (UK Female)', voice: 'en-GB-LibbyNeural', lang: 'en-gb', text: 'Hello, Libby here, with a British accent.' }
     ];
 
     voiceSamples.innerHTML = '';
@@ -189,7 +210,7 @@ function loadVoiceSamples() {
             <i class="fas fa-wave-square"></i>
             <div class="sample-info">
                 <h4>${s.name}</h4>
-                <p>${s.lang === 'hi' ? 'हिंदी' : 'English'}</p>
+                <p>${s.lang === 'hi' ? 'हिंदी' : s.lang === 'en-gb' ? 'English (UK)' : 'English (US)'}</p>
             </div>
         `;
         card.addEventListener('click', () => {
