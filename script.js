@@ -1,31 +1,11 @@
-// script.js - VOICELAB PRO with XTTS-v2 API
+// script.js – VOICELAB with Pollinations API (Free, No Key)
 
-// Pollinations API URL
-    const voice = voiceSelect.value;
-    const language = languageSelect.value !== 'auto' ? languageSelect.value : '';
-    
-    // API endpoint - with emotion tags support 
-    const url = `https://text.pollinations.ai/${encodeURIComponent(text)}?voice=${voice}&lang=${language}`;
-    
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('API failed');
-        
-        const audioBlob = await response.blob();
-        currentAudioUrl = URL.createObjectURL(audioBlob);
-        
-        if (action === 'play') {
-            audioElement.src = currentAudioUrl;
-            audioPlayer.style.display = 'block';
-            await audioElement.play();
-            showStatus('✅ Playing...');
-        } else {
-
-// DOM Elements
+// ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
 const charCount = document.getElementById('charCount');
 const language = document.getElementById('language');
 const voiceStyle = document.getElementById('voiceStyle');
+const specificVoice = document.getElementById('specificVoice');
 const speed = document.getElementById('speed');
 const pitch = document.getElementById('pitch');
 const stability = document.getElementById('stability');
@@ -43,195 +23,167 @@ const statusDiv = document.getElementById('status');
 const voiceSamples = document.getElementById('voiceSamples');
 const themeToggle = document.getElementById('themeToggle');
 
-// State
-let currentAudioUrl = null;
-let isGenerating = false;
+// ========== Global Variables ==========
+let currentAudioUrl = null;      // Store blob URL for download
+let isGenerating = false;        // Prevent double clicks
 
-// Character Counter
-textInput.addEventListener('input', () => {
+// ========== Utility Functions ==========
+function showStatus(message, isError = false) {
+    statusDiv.textContent = message;
+    statusDiv.style.color = isError ? 'var(--error)' : 'var(--text-secondary)';
+}
+
+function updateCharCount() {
     const count = textInput.value.length;
     charCount.textContent = count;
-    
-    // Warning at 4500 characters
-    if (count > 4500) {
-        charCount.style.color = 'var(--warning)';
-    } else {
-        charCount.style.color = 'var(--accent-primary)';
-    }
-});
+    charCount.style.color = count > 4500 ? 'var(--warning)' : 'var(--accent-primary)';
+}
 
-// Slider Values
-speed.addEventListener('input', () => {
-    speedValue.textContent = speed.value + 'x';
-});
+// ========== Slider Updates ==========
+speed.addEventListener('input', () => speedValue.textContent = speed.value + 'x');
+pitch.addEventListener('input', () => pitchValue.textContent = pitch.value);
+stability.addEventListener('input', () => stabilityValue.textContent = Math.round(stability.value * 100) + '%');
+clarity.addEventListener('input', () => clarityValue.textContent = Math.round(clarity.value * 100) + '%');
+textInput.addEventListener('input', updateCharCount);
 
-pitch.addEventListener('input', () => {
-    pitchValue.textContent = pitch.value;
-});
-
-stability.addEventListener('input', () => {
-    stabilityValue.textContent = Math.round(stability.value * 100) + '%';
-});
-
-clarity.addEventListener('input', () => {
-    clarityValue.textContent = Math.round(clarity.value * 100) + '%';
-});
-
-// Theme Toggle
+// ========== Theme Toggle ==========
 themeToggle.addEventListener('click', () => {
     document.body.classList.toggle('light-theme');
     const icon = themeToggle.querySelector('i');
     if (document.body.classList.contains('light-theme')) {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        // Optional: define light theme variables
     } else {
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');
     }
 });
 
-// Show Status
-function showStatus(message, type = 'info') {
-    statusDiv.textContent = message;
-    statusDiv.style.color = type === 'error' ? 'var(--error)' : 
-                           type === 'success' ? 'var(--success)' : 
-                           'var(--text-secondary)';
-}
+// ========== Voice Style Mapping to Pollinations Voice ==========
+function mapStyleToVoice(style, lang) {
+    if (specificVoice.value) return specificVoice.value; // if user selected specific
 
-// Load Voice Samples
-async function loadVoiceSamples() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/voices`, {
-            headers: {
-                'key': API_KEY
-            }
-        });
-        
-        const data = await response.json();
-        
-        voiceSamples.innerHTML = '';
-        data.voices.forEach(voice => {
-            const card = document.createElement('div');
-            card.className = 'sample-card';
-            card.innerHTML = `
-                <i class="fas fa-wave-square"></i>
-                <div class="sample-info">
-                    <h4>${voice.voice_id}</h4>
-                    <p>${voice.description || 'Default voice'}</p>
-                </div>
-            `;
-            card.addEventListener('click', () => playSample(voice.voice_id));
-            voiceSamples.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Failed to load voices:', error);
+    switch (style) {
+        case 'male': return 'onyx';      // deep male
+        case 'female': return 'nova';     // energetic female
+        case 'child': return 'shimmer';   // light, child-like
+        case 'old': return 'echo';        // resonant, mature
+        default: return 'alloy';           // neutral
     }
 }
 
-// Play Voice Sample
-function playSample(voiceId) {
-    textInput.value = `This is a sample of the ${voiceId} voice. यह ${voiceId} आवाज़ का नमूना है।`;
-    generateSpeech();
-}
-
-// Generate Speech
-async function generateSpeech() {
-    if (!textInput.value.trim()) {
-        showStatus('❌ Please enter some text!', 'error');
+// ========== Main TTS Generation Function (Pollinations API) ==========
+async function generateSpeech(action = 'play') {
+    const text = textInput.value.trim();
+    if (!text) {
+        showStatus('❌ कृपया कुछ टेक्स्ट लिखें!', true);
         return;
     }
-    
+
+    // Prevent multiple clicks
+    if (isGenerating) return;
     isGenerating = true;
     generateBtn.disabled = true;
-    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-    
-    showStatus('🔄 Generating speech...');
-    
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> जनरेट हो रहा...';
+    showStatus('🔄 आवाज़ बन रही है...');
+
     try {
-        // Voice mapping based on style
-        let voiceId = 'default';
-        if (voiceStyle.value === 'male') voiceId = 'male_1';
-        else if (voiceStyle.value === 'female') voiceId = 'female_1';
-        else if (voiceStyle.value === 'child') voiceId = 'child_1';
-        else if (voiceStyle.value === 'old') voiceId = 'old_1';
-        
-        const response = await fetch(`${API_BASE_URL}/tts`, {
-            method: 'POST',
-            headers: {
-                'key': API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: textInput.value,
-                voice: voiceId,
-                language: language.value,
-                format: 'mp3',
-                speed: parseFloat(speed.value),
-                pitch: parseFloat(pitch.value)
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('API request failed');
-        }
-        
-        // Get audio blob
+        // Prepare API parameters
+        const voice = mapStyleToVoice(voiceStyle.value, language.value);
+        const lang = language.value === 'auto' ? '' : language.value;
+
+        // Construct URL – Pollinations API expects text in URL path
+        const encodedText = encodeURIComponent(text);
+        const url = `https://text.pollinations.ai/${encodedText}?voice=${voice}${lang ? '&lang=' + lang : ''}`;
+
+        // Fetch audio
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+
         const audioBlob = await response.blob();
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl); // cleanup old
         currentAudioUrl = URL.createObjectURL(audioBlob);
-        
-        // Update audio player
-        audioElement.src = currentAudioUrl;
-        audioPlayer.style.display = 'block';
-        
-        // Auto-play
-        await audioElement.play();
-        
-        showStatus('✅ Speech generated successfully!', 'success');
-        
+
+        if (action === 'play') {
+            audioElement.src = currentAudioUrl;
+            audioPlayer.style.display = 'block';
+            await audioElement.play();
+            showStatus('✅ आवाज़ तैयार!');
+        } else {
+            // Download
+            const a = document.createElement('a');
+            a.href = currentAudioUrl;
+            a.download = `voicelab-${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showStatus('✅ डाउनलोड शुरू!');
+        }
     } catch (error) {
-        showStatus('❌ Error: ' + error.message, 'error');
-        console.error(error);
+        showStatus('❌ एरर: ' + error.message, true);
     } finally {
         isGenerating = false;
         generateBtn.disabled = false;
-        generateBtn.innerHTML = '<i class="fas fa-play"></i> Generate Speech';
+        generateBtn.innerHTML = '<i class="fas fa-play"></i> जनरेट करें';
     }
 }
 
-// Download MP3
-function downloadMP3() {
-    if (!currentAudioUrl) {
-        showStatus('❌ No audio to download! Generate first.', 'error');
-        return;
-    }
-    
-    const a = document.createElement('a');
-    a.href = currentAudioUrl;
-    a.download = `voice-${Date.now()}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    showStatus('✅ Download started!', 'success');
-}
+// ========== Event Listeners for Buttons ==========
+generateBtn.addEventListener('click', () => generateSpeech('play'));
+downloadBtn.addEventListener('click', () => generateSpeech('download'));
 
-// Stop playback
-function stopPlayback() {
+stopBtn.addEventListener('click', () => {
     audioElement.pause();
     audioElement.currentTime = 0;
+    showStatus('⏹️ रोक दिया गया');
+});
+
+// ========== Voice Samples (Predefined) ==========
+function loadVoiceSamples() {
+    const samples = [
+        { name: 'Alloy (संतुलित)', voice: 'alloy', lang: 'en', text: 'Hello, this is Alloy speaking.' },
+        { name: 'Echo (गूंजदार)', voice: 'echo', lang: 'en', text: 'Greetings from Echo, your resonant voice.' },
+        { name: 'Nova (महिला)', voice: 'nova', lang: 'en', text: 'Hi there, Nova here with energy.' },
+        { name: 'Onyx (पुरुष)', voice: 'onyx', lang: 'en', text: 'This is Onyx, a deep male voice.' },
+        { name: 'Shimmer (बच्चा)', voice: 'shimmer', lang: 'en', text: 'Hey, I am Shimmer, light and playful.' },
+        { name: 'हिंदी नमूना', voice: 'alloy', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' }
+    ];
+
+    voiceSamples.innerHTML = '';
+    samples.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'sample-card';
+        card.innerHTML = `
+            <i class="fas fa-wave-square"></i>
+            <div class="sample-info">
+                <h4>${s.name}</h4>
+                <p>${s.lang === 'hi' ? 'हिंदी' : 'English'}</p>
+            </div>
+        `;
+        card.addEventListener('click', () => {
+            textInput.value = s.text;
+            language.value = s.lang;
+            specificVoice.value = s.voice;
+            generateSpeech('play');
+        });
+        voiceSamples.appendChild(card);
+    });
 }
 
-// Event Listeners
-generateBtn.addEventListener('click', generateSpeech);
-downloadBtn.addEventListener('click', downloadMP3);
-stopBtn.addEventListener('click', stopPlayback);
-
-// Initialize
+// ========== Initialize ==========
+updateCharCount();
 loadVoiceSamples();
 
-// Clean up object URLs
+// ========== Clean up on page unload ==========
 window.addEventListener('beforeunload', () => {
-    if (currentAudioUrl) {
-        URL.revokeObjectURL(currentAudioUrl);
-    }
+    if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
 });
+
+// ========== NOTE: भविष्य में दूसरा API लगाने के लिए ==========
+/* 
+   बस generateSpeech() फंक्शन के अंदर API URL और पैरामीटर बदल दें।
+   उदाहरण: अगर आपको ElevenLabs जैसा API मिल जाए, तो fetch का URL बदलें
+   और जरूरत के हिसाब से headers और body सेट करें।
+   बाकी सारा UI और कंट्रोल वैसे ही रहेगा।
+*/
