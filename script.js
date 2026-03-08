@@ -1,4 +1,4 @@
-// script.js – VOICELAB with StreamElements TTS (Free, Reliable)
+// script.js – VOICELAB with Google TTS (Most Reliable, No Key)
 
 // ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
@@ -27,47 +27,22 @@ const themeToggle = document.getElementById('themeToggle');
 let currentAudioUrl = null;
 let isGenerating = false;
 
-// ========== Voice Mapping for StreamElements ==========
-// List of available voices: https://github.com/Gamer5001/Streamelements-TTS/blob/main/voices.md
-const voiceMap = {
-    // Hindi
-    hi: {
-        male: 'hi-IN-RaviNeural',
-        female: 'hi-IN-SwaraNeural',   // Actually StreamElements uses Azure voices, but let's map correctly
-        default: 'hi-IN-SwaraNeural'
-    },
-    // English (US)
-    en: {
-        male: 'en-US-JoeyNeural',
-        female: 'en-US-JennyNeural',
-        child: 'en-US-ChristopherNeural', // Christopher is a child-like voice
-        old: 'en-US-GuyNeural',           // Guy is mature
-        default: 'en-US-JennyNeural'
-    },
-    // English (UK)
-    'en-gb': {
-        male: 'en-GB-RyanNeural',
-        female: 'en-GB-LibbyNeural',
-        default: 'en-GB-LibbyNeural'
-    }
+// ========== Language to Google TTS Code Mapping ==========
+const langMap = {
+    'hi': 'hi',        // Hindi
+    'en': 'en-US',     // English US
+    'en-gb': 'en-GB',  // English UK
+    'auto': 'en-US'    // Default
 };
 
-// Function to get voice ID based on language and style
-function getVoiceId(lang, style) {
-    // If user selected a specific voice, use it directly
-    if (specificVoice.value) return specificVoice.value;
-
-    // Determine language code
-    let langCode = lang;
-    if (lang === 'auto') langCode = 'en'; // default to English if auto
-
-    const langMap = voiceMap[langCode] || voiceMap.en; // fallback to English
-    if (style === 'male' && langMap.male) return langMap.male;
-    if (style === 'female' && langMap.female) return langMap.female;
-    if (style === 'child' && langMap.child) return langMap.child;
-    if (style === 'old' && langMap.old) return langMap.old;
-    return langMap.default || 'en-US-JennyNeural';
-}
+// ========== Google TTS doesn't have male/female selection, 
+// ========== but we can use different language codes for variety
+const voiceMap = {
+    'male': 'en-US',     // Default male-sounding
+    'female': 'en-US',   // Default female-sounding  
+    'child': 'en-US',    // Same, Google uses neural voices
+    'old': 'en-US'
+};
 
 // ========== Utility Functions ==========
 function showStatus(message, isError = false) {
@@ -101,7 +76,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// ========== Main TTS Generation Function (StreamElements) ==========
+// ========== Main TTS Generation Function (Google TTS) ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -116,13 +91,15 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        // Get voice ID based on selected language and style
-        const voiceId = getVoiceId(language.value, voiceStyle.value);
+        // Get language code
+        let langCode = language.value;
+        if (langCode === 'auto') langCode = 'en';
+        const ttsLang = langMap[langCode] || 'en-US';
+        
+        // Google TTS endpoint (unofficial but widely used)
         const encodedText = encodeURIComponent(text);
-
-        // StreamElements API endpoint
-        const url = `https://api.streamelements.com/kappa/v2/speech?voice=${voiceId}&text=${encodedText}`;
-
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${ttsLang}&client=tw-ob&prev=input`;
+        
         // Fetch with timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -131,8 +108,7 @@ async function generateSpeech(action = 'play') {
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API error (${response.status}): ${errorText.slice(0, 100)}`);
+            throw new Error(`HTTP error ${response.status}`);
         }
 
         // Get audio blob
@@ -191,15 +167,14 @@ stopBtn.addEventListener('click', () => {
     showStatus('⏹️ रोक दिया गया');
 });
 
-// ========== Voice Samples (Updated for StreamElements) ==========
+// ========== Voice Samples ==========
 function loadVoiceSamples() {
     const samples = [
-        { name: 'Jenny (US Female)', voice: 'en-US-JennyNeural', lang: 'en', text: 'Hello, I am Jenny, your virtual assistant.' },
-        { name: 'Joey (US Male)', voice: 'en-US-JoeyNeural', lang: 'en', text: 'Hi, this is Joey. I speak in a natural voice.' },
-        { name: 'Ravi (Hindi Male)', voice: 'hi-IN-RaviNeural', lang: 'hi', text: 'नमस्ते, मैं रवि हूँ। मैं हिंदी में बोलता हूँ।' },
-        { name: 'Swara (Hindi Female)', voice: 'hi-IN-SwaraNeural', lang: 'hi', text: 'नमस्ते, मैं स्वरा हूँ। आप कैसे हैं?' },
-        { name: 'Ryan (UK Male)', voice: 'en-GB-RyanNeural', lang: 'en-gb', text: 'Good day, this is Ryan from London.' },
-        { name: 'Libby (UK Female)', voice: 'en-GB-LibbyNeural', lang: 'en-gb', text: 'Hello, Libby here, with a British accent.' }
+        { name: 'English US', lang: 'en', text: 'Hello, this is an English voice from Google.' },
+        { name: 'English UK', lang: 'en-gb', text: 'Hello, this is a British English voice.' },
+        { name: 'हिंदी', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' },
+        { name: 'Español', lang: 'es', text: 'Hola, esto es español.' },
+        { name: 'Français', lang: 'fr', text: 'Bonjour, c\'est du français.' }
     ];
 
     voiceSamples.innerHTML = '';
@@ -210,13 +185,12 @@ function loadVoiceSamples() {
             <i class="fas fa-wave-square"></i>
             <div class="sample-info">
                 <h4>${s.name}</h4>
-                <p>${s.lang === 'hi' ? 'हिंदी' : s.lang === 'en-gb' ? 'English (UK)' : 'English (US)'}</p>
+                <p>${s.lang === 'hi' ? 'हिंदी' : s.lang === 'en-gb' ? 'English UK' : 'English US'}</p>
             </div>
         `;
         card.addEventListener('click', () => {
             textInput.value = s.text;
             language.value = s.lang;
-            specificVoice.value = s.voice;
             generateSpeech('play');
         });
         voiceSamples.appendChild(card);
