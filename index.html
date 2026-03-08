@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎤 VOICELAB <span class="pro-badge">NATURAL</span></h1>
+        <h1>🎤 VOICELAB <span class="pro-badge">PRO</span></h1>
         <p class="subtitle">हिंदी और इंग्लिश में नेचुरल आवाज़ें</p>
         
         <div class="toolbar">
@@ -28,6 +28,16 @@
         
         <div class="controls-grid">
             <div class="control-item">
+                <label for="ttsEngine">
+                    <i class="fas fa-microchip"></i> TTS इंजन:
+                </label>
+                <select id="ttsEngine">
+                    <option value="web-speech">Web Speech API (हिंदी + इंग्लिश)</option>
+                    <option value="kokoro">Kokoro TTS (सिर्फ इंग्लिश, नेचुरल)</option>
+                </select>
+            </div>
+            
+            <div class="control-item">
                 <label for="languageSelect">
                     <i class="fas fa-language"></i> भाषा:
                 </label>
@@ -39,24 +49,11 @@
             </div>
             
             <div class="control-item">
-                <label for="voiceCategory">
-                    <i class="fas fa-users"></i> आवाज़ का प्रकार:
-                </label>
-                <select id="voiceCategory">
-                    <option value="all">सभी आवाज़ें</option>
-                    <option value="male">👨 पुरुष (Male)</option>
-                    <option value="female">👩 महिला (Female)</option>
-                    <option value="child">🧒 बच्चा (Child)</option>
-                    <option value="old">👴 बुजुर्ग (Old)</option>
-                </select>
-            </div>
-            
-            <div class="control-item">
                 <label for="voiceSelect">
-                    <i class="fas fa-microphone"></i> खास आवाज़:
+                    <i class="fas fa-microphone"></i> आवाज़ चुनें:
                 </label>
                 <select id="voiceSelect">
-                    <option value="">कोई खास आवाज़ चुनें</option>
+                    <option value="">आवाज़ें लोड हो रही हैं...</option>
                 </select>
             </div>
             
@@ -88,9 +85,39 @@
         </div>
         
         <div class="status" id="status"></div>
-        <p class="note">✨ ब्राउज़र की built-in आवाज़ों का इस्तेमाल करता है। सबसे नेचुरल आवाज़ के लिए Chrome या Edge इस्तेमाल करें।</p>
+        
+        <!-- हिंदी गाइड सेक्शन -->
+        <div class="hindi-guide">
+            <details>
+                <summary>🇮🇳 हिंदी आवाज़ कैसे लाएँ? (Click करें)</summary>
+                <div class="guide-content">
+                    <p><strong>Chrome में:</strong></p>
+                    <ol>
+                        <li>Chrome में जाएँ: <code>chrome://settings/languages</code></li>
+                        <li>"हिंदी" भाषा ऐड करें</li>
+                        <li>Chrome को रीस्टार्ट करें</li>
+                        <li>अब हिंदी आवाज़ें दिखने लगेंगी</li>
+                    </ol>
+                    <p><strong>Windows में:</strong></p>
+                    <ol>
+                        <li>Settings → Time & Language → Language</li>
+                        <li>Add a language → हिंदी चुनें</li>
+                        <li>Download भाषा पैक करें</li>
+                    </ol>
+                    <p><strong>Mac में:</strong></p>
+                    <ol>
+                        <li>System Preferences → Language & Region</li>
+                        <li>हिंदी ऐड करें</li>
+                    </ol>
+                </div>
+            </details>
+        </div>
+        
+        <p class="note">✨ Web Speech API ब्राउज़र की built-in आवाज़ों का इस्तेमाल करता है। Kokoro TTS (इंग्लिश) जल्द आ रहा है।</p>
     </div>
 
     <script src="script.js"></script>
+    <!-- Kokoro TTS के लिए अलग फाइल (अगले Phase में) -->
+    <!-- <script src="kokoro-tts.js"></script> -->
 </body>
 </html>
