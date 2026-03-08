@@ -1,4 +1,4 @@
-/* style.css - VOICELAB के लिए सारी स्टाइलिंग */
+/* style.css - VOICELAB PRO के लिए एडवांस स्टाइलिंग */
 
 * {
     margin: 0;
@@ -19,10 +19,10 @@ body {
 .container {
     background: white;
     padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
 }
 
 h1 {
@@ -30,6 +30,19 @@ h1 {
     margin: 0 0 10px 0;
     text-align: center;
     font-size: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pro-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-size: 0.4em;
+    padding: 5px 10px;
+    border-radius: 20px;
+    vertical-align: middle;
 }
 
 .subtitle {
@@ -37,6 +50,29 @@ h1 {
     color: #666;
     margin-bottom: 20px;
     font-size: 1.1em;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.toolbar button {
+    padding: 8px 15px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s;
+}
+
+.toolbar button:hover {
+    background: #e0e0e0;
 }
 
 textarea {
@@ -57,27 +93,32 @@ textarea:focus {
     border-color: #667eea;
 }
 
-.controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
-label {
+.control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-item label {
     color: #555;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-select {
-    flex: 1;
-    padding: 12px;
-    font-size: 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    background: white;
-    cursor: pointer;
+select, input[type="range"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
 }
 
 select:focus {
@@ -85,9 +126,15 @@ select:focus {
     border-color: #667eea;
 }
 
-button {
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.primary-btn {
     padding: 12px 25px;
-    font-size: 16px;
     background: #667eea;
     color: white;
     border: none;
@@ -97,10 +144,47 @@ button {
     display: flex;
     align-items: center;
     gap: 5px;
+    flex: 2;
+    justify-content: center;
 }
 
-button:hover {
+.primary-btn:hover {
     background: #5a67d8;
+}
+
+.secondary-btn {
+    padding: 12px 25px;
+    background: #48bb78;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+}
+
+.secondary-btn:hover {
+    background: #38a169;
+}
+
+#stopBtn {
+    background: #f56565;
+}
+
+#stopBtn:hover {
+    background: #e53e3e;
+}
+
+#downloadBtn {
+    background: #9f7aea;
+}
+
+#downloadBtn:hover {
+    background: #805ad5;
 }
 
 .note {
@@ -114,7 +198,25 @@ button:hover {
 .status {
     text-align: center;
     color: #667eea;
-    margin-top: 10px;
+    margin: 10px 0;
     font-size: 14px;
     min-height: 20px;
+    padding: 10px;
+    background: #f7f7f7;
+    border-radius: 5px;
+}
+
+/* रिस्पॉन्सिव डिजाइन */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
 }
