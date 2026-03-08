@@ -1,4 +1,4 @@
-/* style.css - VOICELAB NATURAL के लिए */
+/* style.css - VOICELAB PRO के लिए एडवांस स्टाइलिंग */
 
 * {
     margin: 0;
@@ -15,25 +15,27 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* ये प्रॉपर्टीज बैकग्राउंड को पूरा कवर करेंगी */
+    /* बैकग्राउंड को पूरा कवर करने के लिए */
     background-attachment: fixed;
     background-size: cover;
     background-repeat: no-repeat;
 }
 
 .container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     padding: 2rem;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     width: 100%;
     max-width: 800px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 h1 {
-    color: #333;
+    color: white;
     margin: 0 0 10px 0;
     text-align: center;
     font-size: 2.5em;
@@ -41,6 +43,7 @@ h1 {
     align-items: center;
     justify-content: center;
     gap: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .pro-badge {
@@ -50,11 +53,12 @@ h1 {
     padding: 5px 10px;
     border-radius: 20px;
     vertical-align: middle;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
 .subtitle {
     text-align: center;
-    color: #666;
+    color: rgba(255,255,255,0.9);
     margin-bottom: 20px;
     font-size: 1.1em;
 }
@@ -68,38 +72,40 @@ h1 {
 
 .toolbar button {
     padding: 8px 15px;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
+    background: rgba(255,255,255,0.9);
+    border: none;
     border-radius: 5px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 5px;
     transition: all 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .toolbar button:hover {
-    background: #e0e0e0;
+    background: white;
+    transform: translateY(-2px);
 }
 
 textarea {
     width: 100%;
     height: 150px;
     padding: 15px;
-    border: 2px solid #e0e0e0;
+    border: none;
     border-radius: 10px;
     font-size: 16px;
     resize: vertical;
     box-sizing: border-box;
     font-family: inherit;
     margin-bottom: 20px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 textarea:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5);
 }
 
 .controls-grid {
@@ -116,26 +122,27 @@ textarea:focus {
 }
 
 .control-item label {
-    color: #555;
+    color: white;
     font-weight: 500;
     display: flex;
     align-items: center;
     gap: 5px;
     font-size: 0.9em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 select, input[type="range"] {
     padding: 10px;
-    border: 1px solid #ddd;
+    border: none;
     border-radius: 8px;
     width: 100%;
-    background: white;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5);
 }
 
 .action-buttons {
@@ -159,11 +166,12 @@ select:focus {
     flex: 2;
     justify-content: center;
     font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
 .primary-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.3);
 }
 
 .secondary-btn {
@@ -180,50 +188,72 @@ select:focus {
     flex: 1;
     justify-content: center;
     font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
 .secondary-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.3);
 }
 
 #stopBtn {
     background: #f56565;
 }
 
-#stopBtn:hover {
-    background: #e53e3e;
-    box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
-}
-
 #downloadBtn {
     background: #9f7aea;
 }
 
-#downloadBtn:hover {
-    background: #805ad5;
-    box-shadow: 0 5px 15px rgba(159, 122, 234, 0.4);
-}
-
 .note {
     text-align: center;
-    color: #999;
+    color: rgba(255,255,255,0.8);
     font-size: 14px;
-    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top: 1px solid rgba(255,255,255,0.2);
     padding-top: 15px;
     margin-top: 15px;
 }
 
 .status {
     text-align: center;
-    color: #667eea;
+    color: white;
     margin: 10px 0;
     font-size: 14px;
     min-height: 20px;
     padding: 10px;
-    background: rgba(247, 247, 247, 0.8);
+    background: rgba(0,0,0,0.2);
     border-radius: 8px;
     font-weight: 500;
+}
+
+/* हिंदी गाइड के लिए स्टाइल */
+.hindi-guide {
+    margin-top: 15px;
+    text-align: left;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.hindi-guide summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.hindi-guide .guide-content {
+    padding: 10px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    margin-top: 10px;
+    color: white;
+}
+
+.hindi-guide code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #ffd700;
 }
 
 /* रिस्पॉन्सिव डिजाइन */
