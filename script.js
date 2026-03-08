@@ -1,4 +1,4 @@
-// script.js – VOICELAB with Google TTS (Most Reliable, No Key)
+// script.js – VOICELAB with Google TTS + CORS Proxy
 
 // ========== DOM Elements ==========
 const textInput = document.getElementById('textInput');
@@ -29,19 +29,10 @@ let isGenerating = false;
 
 // ========== Language to Google TTS Code Mapping ==========
 const langMap = {
-    'hi': 'hi',        // Hindi
-    'en': 'en-US',     // English US
-    'en-gb': 'en-GB',  // English UK
-    'auto': 'en-US'    // Default
-};
-
-// ========== Google TTS doesn't have male/female selection, 
-// ========== but we can use different language codes for variety
-const voiceMap = {
-    'male': 'en-US',     // Default male-sounding
-    'female': 'en-US',   // Default female-sounding  
-    'child': 'en-US',    // Same, Google uses neural voices
-    'old': 'en-US'
+    'hi': 'hi',
+    'en': 'en-US',
+    'en-gb': 'en-GB',
+    'auto': 'en-US'
 };
 
 // ========== Utility Functions ==========
@@ -76,7 +67,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// ========== Main TTS Generation Function (Google TTS) ==========
+// ========== Main TTS Generation Function (Google TTS + CORS Proxy) ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -91,28 +82,36 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        // Get language code
         let langCode = language.value;
         if (langCode === 'auto') langCode = 'en';
         const ttsLang = langMap[langCode] || 'en-US';
         
-        // Google TTS endpoint (unofficial but widely used)
         const encodedText = encodeURIComponent(text);
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${ttsLang}&client=tw-ob&prev=input`;
         
-        // Fetch with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        // Google TTS URL
+        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${ttsLang}&client=tw-ob&prev=input`;
+        
+        // CORS Proxy URL (allorigins)
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(googleUrl)}`;
 
-        const response = await fetch(url, { signal: controller.signal });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 sec timeout
+
+        const response = await fetch(proxyUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
 
-        // Get audio blob
         const audioBlob = await response.blob();
+        
+        // Check if blob is actually audio
+        if (audioBlob.type && !audioBlob.type.includes('audio') && audioBlob.type.includes('text')) {
+            const text = await audioBlob.text();
+            throw new Error(`Proxy returned text: ${text.slice(0, 100)}`);
+        }
+
         if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
         currentAudioUrl = URL.createObjectURL(audioBlob);
 
@@ -120,32 +119,28 @@ async function generateSpeech(action = 'play') {
             audioElement.src = currentAudioUrl;
             audioPlayer.style.display = 'block';
 
-            // Handle audio errors
             audioElement.onerror = (e) => {
                 console.error('Audio error:', e);
-                showStatus('❌ ऑडियो चलाने में समस्या। दोबारा प्रयास करें।', true);
+                showStatus('❌ ऑडियो चलाने में समस्या।', true);
                 audioPlayer.style.display = 'none';
             };
 
             audioElement.onloadeddata = () => {
                 showStatus('✅ आवाज़ तैयार!');
-                audioElement.play().catch(e => {
-                    showStatus('⚠️ ऑटो-प्ले नहीं हो सका, प्ले बटन दबाएँ', false);
+                audioElement.play().catch(() => {
+                    showStatus('⚠️ प्ले बटन दबाएँ', false);
                 });
             };
         } else {
-            // Download
             const a = document.createElement('a');
             a.href = currentAudioUrl;
             a.download = `voicelab-${Date.now()}.mp3`;
-            document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
             showStatus('✅ डाउनलोड शुरू!');
         }
     } catch (error) {
         if (error.name === 'AbortError') {
-            showStatus('❌ टाइमआउट – सर्वर धीमा है। बाद में प्रयास करें।', true);
+            showStatus('❌ टाइमआउट – सर्वर धीमा है।', true);
         } else {
             showStatus('❌ एरर: ' + error.message, true);
         }
@@ -170,11 +165,9 @@ stopBtn.addEventListener('click', () => {
 // ========== Voice Samples ==========
 function loadVoiceSamples() {
     const samples = [
-        { name: 'English US', lang: 'en', text: 'Hello, this is an English voice from Google.' },
+        { name: 'English US', lang: 'en', text: 'Hello, this is an English voice.' },
         { name: 'English UK', lang: 'en-gb', text: 'Hello, this is a British English voice.' },
-        { name: 'हिंदी', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' },
-        { name: 'Español', lang: 'es', text: 'Hola, esto es español.' },
-        { name: 'Français', lang: 'fr', text: 'Bonjour, c\'est du français.' }
+        { name: 'हिंदी', lang: 'hi', text: 'नमस्ते, मैं हिंदी में बोल रहा हूँ।' }
     ];
 
     voiceSamples.innerHTML = '';
@@ -185,7 +178,7 @@ function loadVoiceSamples() {
             <i class="fas fa-wave-square"></i>
             <div class="sample-info">
                 <h4>${s.name}</h4>
-                <p>${s.lang === 'hi' ? 'हिंदी' : s.lang === 'en-gb' ? 'English UK' : 'English US'}</p>
+                <p>${s.lang === 'hi' ? 'हिंदी' : 'English'}</p>
             </div>
         `;
         card.addEventListener('click', () => {
