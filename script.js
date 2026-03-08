@@ -67,7 +67,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// ========== Main TTS Generation Function (Google TTS + CORS Proxy) ==========
+========== TTS Generation Function (RapidAPI) ==========
 async function generateSpeech(action = 'play') {
     const text = textInput.value.trim();
     if (!text) {
@@ -82,36 +82,61 @@ async function generateSpeech(action = 'play') {
     showStatus('🔄 आवाज़ बन रही है...');
 
     try {
-        let langCode = language.value;
-        if (langCode === 'auto') langCode = 'en';
-        const ttsLang = langMap[langCode] || 'en-US';
+        // RapidAPI se mili key aur host
+        const API_KEY = 'd0458b1b03msh1ca0ad5522cff6dp17804fjsnd7653add816c';
+        const API_HOST = 'open-ai-text-to-speech1.p.rapidapi.com';
         
-        const encodedText = encodeURIComponent(text);
-        
-        // Google TTS URL
-        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${ttsLang}&client=tw-ob&prev=input`;
-        
-        // CORS Proxy URL (allorigins)
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(googleUrl)}`;
+        // Sahi endpoint yahan daalo (RapidAPI dashboard se copy karo)
+        const API_URL = 'https://open-ai-text-to-speech1.p.rapidapi.com/';
+
+        // Voice mapping - RapidAPI ke voices ke according
+        const voiceMap = {
+            'male': 'onyx',
+            'female': 'nova',
+            'child': 'shimmer',
+            'old': 'echo',
+            'auto': 'alloy'
+        };
+
+        const selectedVoice = specificVoice.value || voiceMap[voiceStyle.value] || 'alloy';
+
+        // Request body
+        const payload = {
+            model: "tts-1",
+            input: text,
+            instructions: "Speak naturally.", // Aap chahein to custom instructions de sakte ho
+            voice: selectedVoice
+        };
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 sec timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const response = await fetch(proxyUrl, { signal: controller.signal });
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-rapidapi-host': API_HOST,
+                'x-rapidapi-key': API_KEY
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`API error (${response.status}): ${errorText.slice(0, 100)}`);
+        }
+
+        // Check if response is audio
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('audio')) {
+            const text = await response.text();
+            throw new Error(`Expected audio but got: ${text.slice(0, 100)}`);
         }
 
         const audioBlob = await response.blob();
         
-        // Check if blob is actually audio
-        if (audioBlob.type && !audioBlob.type.includes('audio') && audioBlob.type.includes('text')) {
-            const text = await audioBlob.text();
-            throw new Error(`Proxy returned text: ${text.slice(0, 100)}`);
-        }
-
         if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
         currentAudioUrl = URL.createObjectURL(audioBlob);
 
