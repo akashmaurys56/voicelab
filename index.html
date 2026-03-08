@@ -2,133 +2,133 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOICELAB PRO - ElevenLabs Style TTS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>VOICELAB – Professional Text to Speech</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="app">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <aside class="sidebar">
             <div class="logo">
                 <i class="fas fa-wave-square"></i>
                 <span>VOICELAB</span>
             </div>
-            
             <nav class="nav-menu">
-                <a href="#" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-microphone"></i>
-                    <span>Voice Lab</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
+                <a href="#" class="nav-item active"><i class="fas fa-home"></i><span>डैशबोर्ड</span></a>
+                <a href="#" class="nav-item"><i class="fas fa-microphone"></i><span>वॉयस लैब</span></a>
+                <a href="#" class="nav-item"><i class="fas fa-history"></i><span>हिस्ट्री</span></a>
+                <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>सेटिंग्स</span></a>
             </nav>
-            
             <div class="user-profile">
                 <i class="fas fa-user-circle"></i>
                 <div class="user-info">
                     <span class="user-name">Akash</span>
-                    <span class="user-plan">Free Plan</span>
+                    <span class="user-plan">फ्री प्लान</span>
                 </div>
             </div>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1>Voice Laboratory</h1>
+        <main class="main-content">
+            <header class="header">
+                <h1>वॉयस जनरेटर</h1>
                 <div class="header-actions">
-                    <button class="theme-toggle" id="themeToggle">
-                        <i class="fas fa-moon"></i>
-                    </button>
+                    <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
                     <div class="credits">
                         <i class="fas fa-bolt"></i>
-                        <span>10,000 / 10,000 credits</span>
+                        <span>असीमित</span>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <!-- TTS Generator Card -->
-            <div class="tts-card">
+            <!-- TTS Card -->
+            <section class="tts-card">
                 <div class="card-header">
-                    <h2>Text to Speech Generator</h2>
-                    <p>Transform your text into natural-sounding speech</p>
+                    <h2>टेक्स्ट टू स्पीच</h2>
+                    <p>लिखें और सुनें – हिंदी और अंग्रेज़ी में नेचुरल आवाज़</p>
                 </div>
 
+                <!-- Text Input -->
                 <div class="input-section">
-                    <textarea 
-                        id="textInput" 
-                        placeholder="Enter your text here... (यहाँ अपना टेक्स्ट लिखें...)"
-                        maxlength="5000"
-                    ></textarea>
+                    <textarea id="textInput" placeholder="यहाँ अपना टेक्स्ट लिखें... (Example: नमस्ते, आप कैसे हैं?)" maxlength="5000"></textarea>
                     <div class="text-stats">
-                        <span id="charCount">0</span> / 5000 characters
+                        <span id="charCount">0</span> / 5000 अक्षर
                     </div>
                 </div>
 
+                <!-- Voice Settings Grid -->
                 <div class="voice-settings">
                     <div class="settings-grid">
+                        <!-- Language -->
                         <div class="setting-item">
-                            <label>🌐 Language</label>
+                            <label><i class="fas fa-language"></i> भाषा</label>
                             <select id="language">
-                                <option value="en">English (US)</option>
-                                <option value="en-gb">English (UK)</option>
-                                <option value="hi">हिंदी (Hindi)</option>
-                                <option value="es">Español</option>
-                                <option value="fr">Français</option>
-                                <option value="de">Deutsch</option>
+                                <option value="auto">ऑटो पहचान</option>
+                                <option value="hi">🇮🇳 हिंदी</option>
+                                <option value="en">🇺🇸 अंग्रेज़ी (US)</option>
+                                <option value="en-gb">🇬🇧 अंग्रेज़ी (UK)</option>
                             </select>
                         </div>
 
+                        <!-- Voice Style -->
                         <div class="setting-item">
-                            <label>🎭 Voice Style</label>
+                            <label><i class="fas fa-voice"></i> आवाज़ का प्रकार</label>
                             <select id="voiceStyle">
-                                <option value="default">Default</option>
-                                <option value="male">👨 Male</option>
-                                <option value="female">👩 Female</option>
-                                <option value="child">🧒 Child</option>
-                                <option value="old">👴 Old</option>
+                                <option value="auto">ऑटो चुनें</option>
+                                <option value="male">👨 पुरुष (Male)</option>
+                                <option value="female">👩 महिला (Female)</option>
+                                <option value="child">🧒 बच्चा (Child)</option>
+                                <option value="old">👴 बुजुर्ग (Old)</option>
                             </select>
                         </div>
 
+                        <!-- Specific Voice (optional) -->
                         <div class="setting-item">
-                            <label>⚡ Speed</label>
+                            <label><i class="fas fa-microphone"></i> खास आवाज़</label>
+                            <select id="specificVoice">
+                                <option value="">कोई खास नहीं (ऑटो)</option>
+                                <option value="alloy">Alloy (संतुलित)</option>
+                                <option value="echo">Echo (गूंजदार)</option>
+                                <option value="fable">Fable (कहानी जैसी)</option>
+                                <option value="nova">Nova (ऊर्जावान)</option>
+                                <option value="onyx">Onyx (गहरी पुरुष)</option>
+                                <option value="shimmer">Shimmer (हल्की महिला)</option>
+                            </select>
+                        </div>
+
+                        <!-- Speed -->
+                        <div class="setting-item">
+                            <label><i class="fas fa-tachometer-alt"></i> स्पीड</label>
                             <div class="slider-container">
                                 <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
                                 <span id="speedValue">1.0x</span>
                             </div>
                         </div>
 
+                        <!-- Pitch -->
                         <div class="setting-item">
-                            <label>🎵 Pitch</label>
+                            <label><i class="fas fa-chart-line"></i> पिच</label>
                             <div class="slider-container">
                                 <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
                                 <span id="pitchValue">1.0</span>
                             </div>
                         </div>
 
+                        <!-- Stability (for future API) -->
                         <div class="setting-item">
-                            <label>🔊 Stability</label>
+                            <label><i class="fas fa-anchor"></i> स्थिरता</label>
                             <div class="slider-container">
                                 <input type="range" id="stability" min="0" max="1" step="0.1" value="0.5">
                                 <span id="stabilityValue">50%</span>
                             </div>
                         </div>
 
+                        <!-- Clarity (for future API) -->
                         <div class="setting-item">
-                            <label>🎯 Clarity</label>
+                            <label><i class="fas fa-highlighter"></i> स्पष्टता</label>
                             <div class="slider-container">
                                 <input type="range" id="clarity" min="0" max="1" step="0.1" value="0.7">
                                 <span id="clarityValue">70%</span>
@@ -137,18 +137,16 @@
                     </div>
                 </div>
 
+                <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button id="generateBtn" class="btn-primary">
-                        <i class="fas fa-play"></i>
-                        Generate Speech
+                    <button class="btn-primary" id="generateBtn">
+                        <i class="fas fa-play"></i> जनरेट करें
                     </button>
-                    <button id="downloadBtn" class="btn-secondary">
-                        <i class="fas fa-download"></i>
-                        Download MP3
+                    <button class="btn-secondary" id="downloadBtn">
+                        <i class="fas fa-download"></i> MP3 डाउनलोड
                     </button>
-                    <button id="stopBtn" class="btn-secondary" style="background: #dc2626;">
-                        <i class="fas fa-stop"></i>
-                        Stop
+                    <button class="btn-secondary" id="stopBtn" style="background:#dc2626;">
+                        <i class="fas fa-stop"></i> रोकें
                     </button>
                 </div>
 
@@ -157,18 +155,16 @@
                     <audio controls id="audioElement"></audio>
                 </div>
 
-                <!-- Status -->
+                <!-- Status Message -->
                 <div class="status" id="status"></div>
-            </div>
+            </section>
 
-            <!-- Voice Samples Grid -->
-            <div class="voice-samples">
-                <h3>Voice Samples</h3>
-                <div class="samples-grid" id="voiceSamples">
-                    <!-- Samples will be loaded here -->
-                </div>
-            </div>
-        </div>
+            <!-- Voice Samples -->
+            <section class="voice-samples">
+                <h3>नमूना आवाज़ें</h3>
+                <div class="samples-grid" id="voiceSamples"></div>
+            </section>
+        </main>
     </div>
 
     <script src="script.js"></script>
