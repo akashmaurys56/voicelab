@@ -28,30 +28,15 @@ let currentAudioUrl = null;
 let isGenerating = false;
 
 // ========== RapidAPI Configuration ==========
-/*
+
 const RAPIDAPI_KEY = 'd0458b1b03msh1ca0ad5522cff6dp17804fjsnd7653add816c';
 const RAPIDAPI_HOST = 'open-ai-text-to-speech1.p.rapidapi.com';
-const RAPIDAPI_URL = 'https://open-ai-text-to-speech1.p.rapidapi.com/'; // ✅ Ye sahi URL hai */
+const RAPIDAPI_URL = 'https://open-ai-text-to-speech1.p.rapidapi.com/'; // ✅ Ye sahi URL hai 
 
 
 
 
-/*
-  npm i bytez.js || yarn add bytez.js
-*/
 
-import Bytez from "bytez.js"
-
-const key = "a4b823696d0fd4b78527d12f0618d764"
-const sdk = new Bytez(key)
-
-// choose TTS
-const model = sdk.model("kisaa/TTS")
-
-// send input to model
-const { error, output } = await model.run("https://huggingface.co/datasets/huggingfacejs/tasks/resolve/main/audio-classification/audio.wav")
-
-console.log({ error, output });
 
 
 
